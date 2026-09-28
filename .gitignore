@@ -1,0 +1,9 @@
+.DS_Store
+._*
+.passage/
+.ssh/
+.aws/
+*.age
+*.pem
+*.key
+id_*

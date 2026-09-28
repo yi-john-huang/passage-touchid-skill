@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if (( $# != 1 )) || [[ ! "$1" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+    printf 'Usage: passage-ssh-add <personal-entry-name>\n' >&2
+    exit 2
+fi
+
+passage show "ssh/$1" | ssh-add -t 1h -
