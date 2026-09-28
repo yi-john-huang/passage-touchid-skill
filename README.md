@@ -2,13 +2,23 @@
 
 A portable [Agent Skills](https://agentskills.io/specification) workflow for **personal** macOS 14+ secrets: Passage + age-plugin-se (Secure Enclave/Touch ID), independent passphrase recovery, SSH agent loading, and an optional explicitly approved legacy static AWS profile. MIT licensed. No credential store, personal host configuration, identity, or private key belongs in this repository.
 
-## Start
+## Quickstart
 
-Requires a Mac with enrolled Touch ID, FileVault, Homebrew, and a human available for prompts. The skill checks prerequisites before installing `age`, `age-plugin-se`, `gnu-getopt`, `tree`, or the maintained [FiloSottile/passage](https://github.com/FiloSottile/passage). Python 3 is needed only for optional AWS integration. Work credentials are out of scope; uncertain ownership means skip.
+1. On a Mac with enrolled Touch ID, FileVault, and Homebrew, clone this **public skill repository** (not a credential store):
 
-From this checkout, Codex and OMP discover `.agents/skills/passage-touchid-credentials/SKILL.md`; Claude Code discovers `.claude/skills/passage-touchid-credentials`, a relative symlink to that **same** canonical skill. For global discovery run `scripts/install-skill.sh`: it preflights both destinations, installs symlinks to `~/.agents/skills/` and `~/.claude/skills/`, never overwrites another skill, and rolls back links made by a failed invocation. Global symlinks point to this checkout; keep it in place. No global installation is required when running inside this project.
+   ```sh
+   git clone https://github.com/yi-john-huang/passage-touchid-skill.git
+   cd passage-touchid-skill
+   ```
 
-Ask the agent: “Use the passage-touchid-credentials skill to walk me through a personal Passage + Touch ID setup; preflight only first, no imports until I approve.” In Claude Code invoke `/passage-touchid-credentials`; in Codex select or mention `$passage-touchid-credentials`; in OMP request `skill://passage-touchid-credentials/SKILL.md` or ask for the skill by name. Approve each real import/configuration change separately; all Touch ID and passphrase prompts belong to you.
+2. Open your agent in this directory. Codex and OMP discover `.agents/skills/passage-touchid-credentials/SKILL.md`; Claude Code discovers `.claude/skills/passage-touchid-credentials`, a relative symlink to the same canonical skill. To use the skill from **other projects**, run `./scripts/install-skill.sh` from this checkout once; it preflights and creates global links under `~/.agents/skills/` and `~/.claude/skills/` without replacing existing skills. Keep this checkout in place for those links to work.
+3. In your agent, request a **read-only preflight** before any setup:
+   - **Claude Code:** `/passage-touchid-credentials` followed by “Help me set up personal Passage + Touch ID; preflight only, no imports until I approve.”
+   - **Codex:** “Use `$passage-touchid-credentials` to help me set up personal Passage + Touch ID; preflight only, no imports until I approve.”
+   - **OMP:** “Read `skill://passage-touchid-credentials/SKILL.md` and help me set up personal Passage + Touch ID; preflight only, no imports until I approve.”
+4. Review each proposed change and approve any real import or SSH/AWS configuration separately. Enter Touch ID and recovery/key passphrases yourself; verify both dummy-entry decryption paths before importing real secrets. SSH and legacy static AWS integrations are optional. Skip work or ambiguously owned credentials.
+
+The workflow checks prerequisites before installing `age`, `age-plugin-se`, `gnu-getopt`, `tree`, or maintained [FiloSottile/passage](https://github.com/FiloSottile/passage). Python 3 is needed only for optional AWS integration. A project-local skill needs no global installation.
 
 ## Security boundaries
 
