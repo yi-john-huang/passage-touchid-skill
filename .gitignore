@@ -7,3 +7,9 @@
 *.pem
 *.key
 id_*
+
+# BEGIN sdd-mcp generated agent files
+.claude/
+.omp/
+.sdd-mcp/
+# END sdd-mcp generated agent files

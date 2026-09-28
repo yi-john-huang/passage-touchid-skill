@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "sdd-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "sdd-mcp-server@5.1.1"
+      ]
+    }
+  }
+}
