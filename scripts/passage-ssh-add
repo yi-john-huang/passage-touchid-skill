@@ -1,9 +1,46 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if (( $# != 1 )) || [[ ! "$1" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+valid_entry='^[A-Za-z0-9][A-Za-z0-9._-]*$'
+
+usage() {
     printf 'Usage: passage-ssh-add <personal-entry-name>\n' >&2
+    printf '       passage-ssh-add --if-missing <encrypted-private-key-file> <personal-entry-name>\n' >&2
     exit 2
+}
+
+# SSH_ASKPASS mode: ssh-add re-invokes this script for the key passphrase.
+if [[ -n "${PASSAGE_SSH_ADD_ASKPASS_ENTRY:-}" ]]; then
+    [[ "$PASSAGE_SSH_ADD_ASKPASS_ENTRY" =~ ^ssh/[A-Za-z0-9][A-Za-z0-9._-]*-passphrase$ ]] || exit 1
+    # Answer a retry with nothing so ssh-add stops instead of re-prompting Touch ID.
+    [[ "${1:-}" == Bad\ passphrase* ]] && exit 1
+    exec passage show "$PASSAGE_SSH_ADD_ASKPASS_ENTRY"
 fi
 
-passage show "ssh/$1" | ssh-add -t 1h -
+if (( $# == 1 )) && [[ "$1" =~ $valid_entry ]]; then
+    passage show "ssh/$1" | ssh-add -t 1h -
+    exit
+fi
+
+(( $# == 3 )) && [[ "$1" == --if-missing && "$3" =~ $valid_entry ]] || usage
+key_file=$2
+entry=$3
+
+# Never fail the calling ssh: on any problem it falls back to the key passphrase.
+fingerprint=$(ssh-keygen -lf "$key_file.pub" 2>/dev/null | awk '{print $2}') || true
+if [[ -z "$fingerprint" ]]; then
+    printf 'passage-ssh-add: cannot read %s.pub\n' "$key_file" >&2
+    exit 0
+fi
+if ssh-add -l 2>/dev/null | awk '{print $2}' | grep -qxF "$fingerprint"; then
+    exit 0
+fi
+
+passphrase_entry="ssh/$entry-passphrase"
+if [[ -f "${PASSAGE_DIR:-$HOME/.passage/store}/$passphrase_entry.age" ]]; then
+    PASSAGE_SSH_ADD_ASKPASS_ENTRY=$passphrase_entry SSH_ASKPASS="$0" SSH_ASKPASS_REQUIRE=force \
+        ssh-add -t 1h "$key_file" </dev/null || true
+else
+    { passage show "ssh/$entry" | ssh-add -t 1h -; } || true
+fi
+exit 0

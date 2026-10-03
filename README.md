@@ -24,7 +24,7 @@ The workflow checks prerequisites before installing `age`, `age-plugin-se`, `gnu
 
 The primary Secure Enclave identity stays device-bound. A second age identity is passphrase-encrypted for independent recovery; both public recipients protect every entry. First verify a dummy entry with Touch ID **and** the recovery passphrase. The recovery backup needs encrypted store Git history, `identities.backup.age`, and independently held passphrase. Store filenames/Git history reveal metadata. Never publish or sync the private store without separate approval.
 
-SSH integration is opt-in: install `scripts/passage-ssh-add` to `~/.local/bin/passage-ssh-add` mode `0700` only then. Loading prompts for Touch ID; subsequent SSH connections use a one-hour agent entry. Retain an encrypted private key for passphrase fallback; a `.pub` file cannot serve as private-key fallback. Per-connection Touch ID requires another agent design such as Secretive. `scripts/aws-passage-credentials` is likewise opt-in for a **new personal static** AWS profile, installed to `~/.local/bin/aws-passage-credentials` mode `0700`. Prefer IAM Identity Center/temporary credentials. Never display the real helper's stdout; use `aws sts get-caller-identity --profile <new-personal-profile>` to inspect metadata only.
+SSH integration is opt-in: install `scripts/passage-ssh-add` to `~/.local/bin/passage-ssh-add` mode `0700` only then. Loading prompts for Touch ID; subsequent SSH connections use a one-hour agent entry. A `Match originalhost <alias> exec "passage-ssh-add --if-missing <key> <entry>"` stanza reloads the key with Touch ID whenever it is missing from the agent; storing the key passphrase as `ssh/<entry>-passphrase` makes that a single Touch ID with no passphrase typing. Retain an encrypted private key for passphrase fallback; a `.pub` file cannot serve as private-key fallback. Per-connection Touch ID requires another agent design such as Secretive. `scripts/aws-passage-credentials` is likewise opt-in for a **new personal static** AWS profile, installed to `~/.local/bin/aws-passage-credentials` mode `0700`. Prefer IAM Identity Center/temporary credentials. Never display the real helper's stdout; use `aws sts get-caller-identity --profile <new-personal-profile>` to inspect metadata only.
 
 ## Troubleshooting
 
@@ -32,6 +32,7 @@ SSH integration is opt-in: install `scripts/passage-ssh-add` to `~/.local/bin/pa
 - Passage insert fails on macOS: check `gnu-getopt` PATH with `brew info gnu-getopt`; listings require `tree`.
 - `age-plugin-se` recipient fails: use matching `--recipient-type tag` for age >=1.3 in both keygen and recipients; otherwise consistently use `se`.
 - SSH says `.pub: invalid format` after agent expiration: the personal stanza must select the encrypted **private** file; check `ssh -G <personal-alias>` and leave the other hosts' agent alone.
+- SSH asks `Enter passphrase for key` instead of Touch ID: the agent is empty (`ssh-add -l`). Add the `Match originalhost … exec "passage-ssh-add --if-missing …"` stanza and the `ssh/<entry>-passphrase` entry described in `references/ssh.md`.
 - Recovery fails: stop imports; verify both recipients and the independently held passphrase before any real migration.
 - AWS process repeats Touch ID: generic credential processes are not cached by AWS; switch to Identity Center where possible.
 
